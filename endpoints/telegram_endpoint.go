@@ -326,7 +326,7 @@ func (e *TelegramEndpoint) handlerNew(tokens []string, update *tgbotapi.Update) 
 	pattern := "https://github.com/%v/releases/%v was tagged"
 
 	if gitlab {
-		pattern = "https://gitlab.com//%v/-/tags/%v was tagged"
+		pattern = "https://gitlab.com/%v/-/tags/%v was tagged"
 	}
 
 	tmp := fmt.Sprintf(pattern, repo, "1.0")
