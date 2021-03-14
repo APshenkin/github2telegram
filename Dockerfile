@@ -4,6 +4,9 @@ FROM golang:1.15-alpine AS builder
 ENV CGO_ENABLED=1 \
     GOOS=linux
 
+# add certificates
+RUN apk add --no-cache ca-certificates 2>&1
+
 # Move to working directory /build
 WORKDIR /build
 
@@ -27,7 +30,7 @@ FROM scratch
 
 WORKDIR /app
 
-COPY ca-certificates.crt /etc/ssl/certs/ca-certificates.pem
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.pem
 COPY --from=builder /dist/github2telegram /app
 
 # Command to run

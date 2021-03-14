@@ -227,7 +227,7 @@ func (e *TelegramEndpoint) checkAuthorized(update *tgbotapi.Update) bool {
 		return update.Message.From.UserName == configs.Config.AdminUsername
 	}
 
-	return true
+	return false
 }
 
 func (e *TelegramEndpoint) isRepoNameValid(repo string) error {
