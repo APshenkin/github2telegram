@@ -9,7 +9,7 @@ type Database interface {
 	GetLastTag(url, filter string) string
 	UpdateLastUpdateTime(url, filter, tag string, t time.Time)
 
-	AddFeed(name, repo, filter, messagePattern string) (int, error)
+	AddFeed(name, repo, filter, messagePattern string, gitlab bool) (int, error)
 	GetFeed(name string) (*Feed, error)
 	ListFeeds() ([]*Feed, error)
 
@@ -30,4 +30,5 @@ type Feed struct {
 	Filter         string
 	Name           string
 	MessagePattern string
+	Gitlab         bool
 }

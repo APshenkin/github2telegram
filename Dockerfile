@@ -7,14 +7,14 @@ ENV CGO_ENABLED=1 \
 # add certificates
 RUN apk add --no-cache ca-certificates 2>&1
 
+# Additional packages required
+RUN apk -U add musl-dev gcc
+
 # Move to working directory /build
 WORKDIR /build
 
 # Copy the code into the container
 COPY . .
-
-# Additional packages required
-RUN apk -U add musl-dev gcc
 
 # Build the application
 RUN go build -v -a -tags netgo -ldflags '-w -extldflags "-static"' .

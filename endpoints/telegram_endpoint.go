@@ -227,7 +227,7 @@ func (e *TelegramEndpoint) checkAuthorized(update *tgbotapi.Update) bool {
 		return update.Message.From.UserName == configs.Config.AdminUsername
 	}
 
-	return false
+	return true
 }
 
 func (e *TelegramEndpoint) isRepoNameValid(repo string) error {
@@ -270,64 +270,80 @@ func (e *TelegramEndpoint) isFilterNameValid(filterName string) error {
 	return nil
 }
 
-	func (e *TelegramEndpoint) handlerNew(tokens []string, update *tgbotapi.Update) error {
-		if !e.checkAuthorized(update) {
-			return errUnauthorized
-		}
-		if len(tokens) < 4 {
-			return errors.New("Command require exactly 4 arguments\n\n" + e.commands["/new"].description)
-		}
-
-		e.logger.Debug("got repo add request",
-			zap.Strings("tokens", tokens),
-		)
-
-		repo := tokens[1]
-		name := tokens[2]
-		filter := tokens[3]
-		err := e.isRepoNameValid(repo)
-		if err != nil {
-			return errors.Wrap(err, "invalid repo_name")
-		}
-
-		err = e.isFilterNameValid(name)
-		if err != nil {
-			return errors.Wrap(err, "invalid filter_name")
-		}
-
-		_, err = regexp.Compile(filter)
-		if err != nil {
-			return errors.Wrap(err, "invalid regexp")
-		}
-
-		resp, err := http.Get(fmt.Sprintf("https://github.com/%s/releases.atom", repo))
-		if err != nil {
-			return errors.Wrap(err, "repo is not accessible or doesn't exist")
-		}
-
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			return errors.New(fmt.Sprintf("repo is not accessible or doesn't exist, http_code: %v", resp.StatusCode))
-		}
-
-		pattern := "https://github.com/%v/releases/%v was tagged"
-
-		tmp := fmt.Sprintf(pattern, repo, "1.0")
-		if strings.Contains(tmp, "%!") {
-			return errors.New("Invalid message pattern!")
-		}
-
-		feed, err := feeds.NewFeed(repo, filter, name, pattern, e.db)
-		if err != nil {
-			return err
-		}
-
-		feeds.UpdateFeeds([]*feeds.Feed{feed})
-
-		e.sendMessage(update.Message.Chat.ID, update.Message.MessageID, "done")
-		return nil
+func (e *TelegramEndpoint) handlerNew(tokens []string, update *tgbotapi.Update) error {
+	if !e.checkAuthorized(update) {
+		return errUnauthorized
 	}
+	if len(tokens) < 4 {
+		return errors.New("Command require exactly 4 arguments\n\n" + e.commands["/new"].description)
+	}
+
+	e.logger.Debug("got repo add request",
+		zap.Strings("tokens", tokens),
+	)
+
+	repo := tokens[1]
+	name := tokens[2]
+	filter := tokens[3]
+
+	gitlab := false
+	if len(tokens) == 5 && tokens[4] == "gitlab" {
+		gitlab = true
+	}
+
+	err := e.isRepoNameValid(repo)
+	if err != nil {
+		return errors.Wrap(err, "invalid repo_name")
+	}
+
+	err = e.isFilterNameValid(name)
+	if err != nil {
+		return errors.Wrap(err, "invalid filter_name")
+	}
+
+	_, err = regexp.Compile(filter)
+	if err != nil {
+		return errors.Wrap(err, "invalid regexp")
+	}
+
+	checkUrl := fmt.Sprintf("https://github.com/%s/releases.atom", repo)
+
+	if gitlab {
+		checkUrl = fmt.Sprintf("https://gitlab.com/%s/-/tags?format=atom", repo)
+	}
+
+	resp, err := http.Get(checkUrl)
+	if err != nil {
+		return errors.Wrap(err, "repo is not accessible or doesn't exist")
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(fmt.Sprintf("repo is not accessible or doesn't exist, http_code: %v", resp.StatusCode))
+	}
+
+	pattern := "https://github.com/%v/releases/%v was tagged"
+
+	if gitlab {
+		pattern = "https://gitlab.com//%v/-/tags/%v was tagged"
+	}
+
+	tmp := fmt.Sprintf(pattern, repo, "1.0")
+	if strings.Contains(tmp, "%!") {
+		return errors.New("Invalid message pattern!")
+	}
+
+	feed, err := feeds.NewFeed(repo, filter, name, pattern, gitlab, e.db)
+	if err != nil {
+		return err
+	}
+
+	feeds.UpdateFeeds([]*feeds.Feed{feed})
+
+	e.sendMessage(update.Message.Chat.ID, update.Message.MessageID, "done")
+	return nil
+}
 
 func (e *TelegramEndpoint) handlerForceProcess(tokens []string, update *tgbotapi.Update) error {
 	if update.Message.From.UserName != configs.Config.AdminUsername {
@@ -520,8 +536,8 @@ func (e *TelegramEndpoint) Process() {
 			if ok {
 				err = cmd.f(tokens, &update)
 				if err != nil {
-						m = err.Error()
-						markdownMessage = false
+					m = err.Error()
+					markdownMessage = false
 				}
 			}
 

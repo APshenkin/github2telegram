@@ -115,7 +115,7 @@ func main() {
 
 	feedsList := make([]*feeds.Feed, 0, len(feedsListDB))
 	for _, f := range feedsListDB {
-		f2, err := feeds.NewFeed(f.Repo, f.Filter, f.Name, f.MessagePattern, database)
+		f2, err := feeds.NewFeed(f.Repo, f.Filter, f.Name, f.MessagePattern, f.Gitlab, database)
 		if err != nil {
 			continue
 		}

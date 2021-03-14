@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	currentSchemaVersion = 2
+	currentSchemaVersion = 3
 )
 
 type SQLite struct {
@@ -98,7 +98,9 @@ func initSqlite() Database {
 				_, err = configs.Config.DB.Exec(`
 ALTER TABLE last_version ADD COLUMN 'last_tag' VARCHAR(255) NOT NULL DEFAULT '';
 
-UPDATE schema_version SET version = 2 WHERE id=1;
+ALTER TABLE feeds ADD COLUMN 'gitlab' BOOLEAN NOT NULL DEFAULT false;
+
+UPDATE schema_version SET version = 3 WHERE id=1;
 				`)
 
 				if err != nil {
@@ -109,6 +111,22 @@ UPDATE schema_version SET version = 2 WHERE id=1;
 					)
 				}
 				// 'last_tag' VARCHAR(255) NOT NULL DEFAULT '',
+
+			case 2:
+				_, err = configs.Config.DB.Exec(`
+ALTER TABLE feeds ADD COLUMN 'gitlab' BOOLEAN NOT NULL DEFAULT false;
+
+UPDATE schema_version SET version = 3 WHERE id=1;
+				`)
+
+				if err != nil {
+					logger.Fatal("failed to migrate database",
+						zap.Int("databaseVersion", schemaVersion),
+						zap.Int("upgradingTo", currentSchemaVersion),
+						zap.Error(err),
+					)
+				}
+				// 'gitlab' BOOLEAN NOT NULL DEFAULT false,
 			default:
 				// Don't know how to migrate from this version
 				logger.Fatal("Unknown schema version specified",
@@ -189,7 +207,7 @@ func (d *SQLite) GetLastTag(url, filter string) string {
 	return tag
 }
 
-func (d *SQLite) AddFeed(name, repo, filter, messagePattern string) (int, error) {
+func (d *SQLite) AddFeed(name, repo, filter, messagePattern string, gitlab bool) (int, error) {
 	stmt, err := d.db.Prepare("SELECT id FROM 'feeds' where name=? and repo=?;")
 	if err != nil {
 		return -1, err
@@ -211,12 +229,12 @@ func (d *SQLite) AddFeed(name, repo, filter, messagePattern string) (int, error)
 	}
 	_ = rows.Close()
 
-	stmt, err = d.db.Prepare("INSERT INTO 'feeds' (name, repo, filter, message_pattern) VALUES (?, ?, ?, ?)")
+	stmt, err = d.db.Prepare("INSERT INTO 'feeds' (name, repo, filter, message_pattern, gitlab) VALUES (?, ?, ?, ?, ?)")
 	if err != nil {
 		return -1, err
 	}
 
-	_, err = stmt.Exec(name, repo, filter, messagePattern)
+	_, err = stmt.Exec(name, repo, filter, messagePattern, gitlab)
 	if err != nil {
 		return -1, err
 	}
@@ -243,7 +261,7 @@ func (d *SQLite) AddFeed(name, repo, filter, messagePattern string) (int, error)
 }
 
 func (d *SQLite) GetFeed(name string) (*Feed, error) {
-	stmt, err := d.db.Prepare("SELECT name, repo, filter, message_pattern FROM 'feeds' WHERE name=?;")
+	stmt, err := d.db.Prepare("SELECT name, repo, filter, message_pattern, gitlab FROM 'feeds' WHERE name=?;")
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +273,7 @@ func (d *SQLite) GetFeed(name string) (*Feed, error) {
 
 	result := &Feed{}
 	for rows.Next() {
-		err = rows.Scan(&result.Name, &result.Repo, &result.Filter, &result.MessagePattern)
+		err = rows.Scan(&result.Name, &result.Repo, &result.Filter, &result.MessagePattern, &result.Gitlab)
 		if err != nil {
 			continue
 		}
@@ -266,7 +284,7 @@ func (d *SQLite) GetFeed(name string) (*Feed, error) {
 }
 
 func (d *SQLite) ListFeeds() ([]*Feed, error) {
-	rows, err := d.db.Query("SELECT id, name, repo, filter, message_pattern FROM 'feeds';")
+	rows, err := d.db.Query("SELECT id, name, repo, filter, message_pattern, gitlab FROM 'feeds';")
 	if err != nil {
 		return nil, err
 	}
@@ -274,13 +292,14 @@ func (d *SQLite) ListFeeds() ([]*Feed, error) {
 	var result []*Feed
 	var id int
 	var name, repo, filter, pattern string
+	var gitlab bool
 	for rows.Next() {
-		err = rows.Scan(&id, &name, &repo, &filter, &pattern)
+		err = rows.Scan(&id, &name, &repo, &filter, &pattern, &gitlab)
 		if err != nil {
 			continue
 		}
 
-		f := &Feed{id, repo, filter, name, pattern}
+		f := &Feed{id, repo, filter, name, pattern, gitlab}
 		result = append(result, f)
 	}
 	_ = rows.Close()
