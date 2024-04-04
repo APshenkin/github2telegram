@@ -5,7 +5,7 @@ github.com/PuerkitoBio/goquery
 github.com/andybalholm/cascadia
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/lomik/zapwriter v0.0.0-20180906104450-2ec2b9a61680
+# github.com/lomik/zapwriter v0.0.0-20210624082824-c1161d1eb463
 ## explicit
 github.com/lomik/zapwriter
 # github.com/lunny/html2md v0.0.0-20181018071239-7d234de44546
@@ -29,7 +29,7 @@ github.com/mmcdole/goxpp
 github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/stretchr/testify v1.5.1
+# github.com/stretchr/testify v1.7.0
 ## explicit
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
@@ -37,11 +37,13 @@ github.com/stretchr/testify/suite
 # github.com/technoweenie/multipartstreamer v1.0.1
 ## explicit
 github.com/technoweenie/multipartstreamer
-# go.uber.org/atomic v1.6.0
+# go.uber.org/atomic v1.7.0
 go.uber.org/atomic
-# go.uber.org/multierr v1.5.0
+# go.uber.org/multierr v1.6.0
 go.uber.org/multierr
-# go.uber.org/zap v1.14.1
+# go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee
+## explicit
+# go.uber.org/zap v1.17.0
 ## explicit
 go.uber.org/zap
 go.uber.org/zap/buffer
@@ -49,11 +51,13 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/net v0.0.0-20200202094626-16171245cfb2
+# golang.org/x/lint v0.0.0-20190930215403-16217165b5de
+## explicit
+# golang.org/x/net v0.0.0-20210427231257-85d9c07bbe3a
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.6
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
@@ -64,14 +68,22 @@ golang.org/x/text/encoding/korean
 golang.org/x/text/encoding/simplifiedchinese
 golang.org/x/text/encoding/traditionalchinese
 golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
 golang.org/x/text/internal/tag
 golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
+# golang.org/x/tools v0.0.0-20191029190741-b9c20aec41a5
+## explicit
 # gopkg.in/telegram-bot-api.v4 v4.6.4
 ## explicit
 gopkg.in/telegram-bot-api.v4
 # gopkg.in/yaml.v2 v2.2.8
 ## explicit
 gopkg.in/yaml.v2
+# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+gopkg.in/yaml.v3
+# honnef.co/go/tools v0.0.1-2019.2.3
+## explicit
